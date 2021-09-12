@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{ page_title }}</title>
+</head>
+<body>
+    {% for album_name, songs in albums.items() %}
+        <div>
+            <h1>{{ album_name }}</h1>
+            {% for song in songs %}
+                <figure>
+                    <figcaption>{{ song.title }}</figcaption>
+                    <audio controls preload="metadata">
+                      {% for file_path in song.file_paths %}
+                          <source src="{{ file_path }}" type="{{ get_mime_type(file_path) }}">
+                      {% endfor %}
+                      <p>Your browser doesn't support HTML5 audio. Here are links instead:</p>
+                        <ul>
+                            {% for file_path in song.file_paths %}
+                                {# Link text of file extension #}
+                                <li><a href="{{ file_path }}">{{ file_path[file_path.find(".") + 1:] }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </audio>
+                </figure>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</body>
+</html>
