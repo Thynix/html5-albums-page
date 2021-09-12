@@ -1,9 +1,11 @@
-from tinytag import TinyTag
 import argparse
+import io
+import mimetypes
 import os
 from collections import defaultdict
+
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-import mimetypes
+from tinytag import TinyTag
 
 
 def main():
@@ -36,7 +38,12 @@ def load_albums(path):
     albums = defaultdict(list)
     for file_paths in songs.values():
         song_tags = None
-        for file_path in file_paths:
+        for file_path in sorted(file_paths, key=lambda p: {
+            # OGG seems to have the most robust tag encoding.
+            ".ogg": 0,
+            ".mp3": 1,
+            ".m4a": 2,
+        }[p[p.find("."):]]):
             tags = TinyTag.get(file_path)
 
             # Some formats might not be tagged.
@@ -63,11 +70,17 @@ class Song:
         self.track = track
         self.title = title
         self.artist = artist
-        self.file_paths = file_paths
+        # Sort files for a song in order of increasing file size. (Assuming equivalent quality.)
+        self.file_paths = sorted(file_paths, key=get_file_size)
 
 
-def get_mime_type(file_path):
+def get_mime_type(file_path) -> str:
     return mimetypes.guess_type(file_path)[0]
+
+
+def get_file_size(path: str) -> int:
+    with open(path, 'rb') as file:
+        return file.seek(0, io.SEEK_END)
 
 
 if __name__ == '__main__':
